@@ -13,16 +13,16 @@ type Channel = String
 type Server = String
 
 data Config = Config { server :: String
-					 , nick :: String
-					 , realname :: String
-					 , channels :: [String]
-					 }
+                     , nick :: String
+                     , realname :: String
+                     , channels :: [String]
+                     }
 
 data Command
-	= User Nick String
-	| Nick Nick
-	| Join Channel
-	| Pong Server
+    = User Nick String
+    | Nick Nick
+    | Join Channel
+    | Pong Server
 
 
 data Message = Msg (Maybe String) [String]
@@ -30,9 +30,9 @@ data Message = Msg (Maybe String) [String]
 
 handleMessage :: String -> Handle -> IO ()
 handleMessage message = case parseMessage message of
-	Just (Msg _ ["PING", server]) -> sendCommand $ Pong server
-	Just (Msg (Just prefix) content) -> (\ h -> putStrLn (prefix ++ show content))
-	_ -> (\ h -> putStrLn message)
+    Just (Msg _ ["PING", server]) -> sendCommand $ Pong server
+    Just (Msg (Just prefix) content) -> (\ h -> putStrLn (prefix ++ show content))
+    _ -> (\ h -> putStrLn message)
 
 sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 * :" ++ realname ++ "\n")
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
