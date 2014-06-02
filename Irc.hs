@@ -1,5 +1,6 @@
 module Irc
 ( Command(User, Nick, Join, Pong)
+, handleMessage
 , Message(Msg)
 , sendCommand
 , parseMessage
@@ -15,6 +16,13 @@ data Command
 
 
 data Message = Msg (Maybe String) [String]
+
+
+handleMessage :: String -> Handle -> IO ()
+handleMessage message = case parseMessage message of
+	Just (Msg _ ["PING", server]) -> sendCommand $ Pong server
+	Just (Msg (Just prefix) content) -> (\ h -> putStrLn (prefix ++ show content))
+	_ -> (\ h -> putStrLn message)
 
 sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 * :" ++ realname ++ "\n")
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")

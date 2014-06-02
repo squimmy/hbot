@@ -5,18 +5,9 @@ import Data.Maybe
 import System.Environment
 import Irc
 
-handleMessage :: String -> Handle -> IO ()
-handleMessage message = case parseMessage message of
-	Just (Msg _ ["PING", server]) -> sendCommand $ Pong server
-	Just (Msg (Just prefix) content) -> (\ h -> putStrLn (prefix ++ show content))
-	_ -> (\ h -> putStrLn message)
-
-
-
 connect :: String -> IO Handle
 connect server = withSocketsDo $ do
 	connectTo server $ PortNumber 6667 
-
 
 main = do
 	args <- getArgs
