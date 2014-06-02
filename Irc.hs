@@ -8,11 +8,21 @@ module Irc
 
 import System.IO
 
+type Nick = String
+type Channel = String
+type Server = String
+
+data Config = Config { server :: String
+					 , nick :: String
+					 , realname :: String
+					 , channels :: [String]
+					 }
+
 data Command
-	= User String String
-	| Nick String
-	| Join String
-	| Pong String
+	= User Nick String
+	| Nick Nick
+	| Join Channel
+	| Pong Server
 
 
 data Message = Msg (Maybe String) [String]
