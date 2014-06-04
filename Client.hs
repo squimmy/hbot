@@ -10,5 +10,9 @@ main = do
     let nick : name : server : channels = args
     let config = Config server nick name channels
     (sendMessage, input) <- connect(config)
-    mapM_ print input
+    mapM_ sendMessage (mapMaybe echo input)
 
+echo :: Message -> Maybe Command
+echo (PrivateMessage nick text) = Just (PrivMsg nick text)
+echo (ChannelMessage channel nick text) = Just (PrivMsg channel (nick ++ ": " ++ text))
+echo _ = Nothing
