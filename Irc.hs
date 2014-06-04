@@ -1,9 +1,9 @@
 module Irc
 ( Command(User, Nick, Join, Pong)
-, Received(PrivateMessage, ChannelMessage, Other, ParseFailed)
+, Message(PrivateMessage, ChannelMessage, Other, ParseFailed)
 , connect
 , Config(Config)
-, Message(Msg)
+, RawMessage(Msg)
 , sendCommand
 , parseMessage
 ) where
@@ -30,7 +30,7 @@ data Command
     | Join Channel
     | Pong Server
 
-data Received
+data Message
     = Ping Server
     | PrivateMessage Nick String
     | ChannelMessage Channel Nick String
@@ -38,9 +38,9 @@ data Received
     | ParseFailed
     deriving (Show)
 
-data Message = Msg (Maybe String) [String]
+data RawMessage = Msg (Maybe String) [String]
 
-connect :: Config -> IO (SendCommand, [Received])
+connect :: Config -> IO (SendCommand, [Message])
 connect config = do
     handle <- connect (server config)
     let send = flip sendCommand handle
@@ -59,14 +59,14 @@ sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
 sendCommand (Join channel) = flip hPutStr ("JOIN " ++ channel ++ "\n")
 sendCommand (Pong server) = flip hPutStr ("PONG " ++ server ++ "\n")
 
-parseMessage :: Nick -> String -> Received
+parseMessage :: Nick -> String -> Message
 parseMessage nick message = case pm message of
     Just (Msg _ ["PING", server]) -> Ping server
     Just (Msg (Just prefix) ["PRIVMSG", recipient, text]) | recipient == nick -> PrivateMessage (extractNick prefix) text
                                                           | otherwise -> ChannelMessage recipient (extractNick prefix) text
     Just (Msg (Just prefix) content) -> Other (prefix ++ show content)
     _ -> ParseFailed
-    where pm :: String -> Maybe Message
+    where pm :: String -> Maybe RawMessage
           pm (' ':xs) = pm $ ltrim xs
           pm (':':xs) = Just $ Msg (Just prefix) (pRec (ltrim content) []) where (prefix, content) = break (==' ') xs
           pm xs = Just $ Msg Nothing (pRec xs [])
