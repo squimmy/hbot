@@ -8,6 +8,7 @@ module Irc
 , parseMessage
 ) where
 
+import Control.Concurrent
 import Control.Monad
 import Data.List
 import Network
@@ -51,7 +52,7 @@ connect config = do
     mapM_ (send . Join) (channels config)
     hFlush handle
     let (pings, other) = partition isPing (map (parseMessage (nick config)) line)
-    mapM_ send (map reply pings)
+    forkIO (mapM_ send (map reply pings))
     return (send, other)
     where
         connect server = withSocketsDo $ do
