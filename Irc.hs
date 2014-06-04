@@ -32,6 +32,7 @@ data Command
     | Join Channel
     | Pong Server
     | PrivMsg String String
+    deriving (Show)
 
 data Message
     = Ping Server
