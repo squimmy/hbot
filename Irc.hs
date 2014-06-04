@@ -1,5 +1,5 @@
 module Irc
-( Command(User, Nick, Join, Pong)
+( Command(User, Nick, Join)
 , Message(PrivateMessage, ChannelMessage, Other, ParseFailed)
 , connect
 , Config(Config)
