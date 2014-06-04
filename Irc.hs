@@ -72,15 +72,17 @@ parseMessage nick message = case pm message of
                                                           | otherwise -> ChannelMessage recipient (extractNick prefix) text
     Just (Msg (Just prefix) content) -> Other (prefix ++ show content)
     _ -> ParseFailed
-    where pm :: String -> Maybe RawMessage
-          pm (' ':xs) = pm $ ltrim xs
-          pm (':':xs) = Just $ Msg (Just prefix) (pRec (ltrim content) []) where (prefix, content) = break (==' ') xs
-          pm xs = Just $ Msg Nothing (pRec xs [])
-          extractNick = takeWhile (/= '!')
+    where
+        pm :: String -> Maybe RawMessage
+        pm (' ':xs) = pm $ ltrim xs
+        pm (':':xs) = Just $ Msg (Just prefix) (pRec (ltrim content) []) where (prefix, content) = break (==' ') xs
+        pm xs = Just $ Msg Nothing (pRec xs [])
 
-pRec :: String -> [String] -> [String]
-pRec [] acc       = reverse acc
-pRec (':':xs) acc = reverse $ xs:acc
-pRec xs acc       = pRec (ltrim rem) (param:acc) where (param, rem) = break (==' ') xs
+        extractNick = takeWhile (/= '!')
+
+        pRec :: String -> [String] -> [String]
+        pRec [] acc       = reverse acc
+        pRec (':':xs) acc = reverse $ xs:acc
+        pRec xs acc       = pRec (ltrim rem) (param:acc) where (param, rem) = break (==' ') xs
 
 ltrim = dropWhile (==' ')
