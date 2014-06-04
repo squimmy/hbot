@@ -1,5 +1,5 @@
 module Irc
-( Command(User, Nick, Join)
+( Command(User, Nick, Join, PrivMsg)
 , Message(PrivateMessage, ChannelMessage, Other, ParseFailed)
 , connect
 , Config(Config)
@@ -31,6 +31,7 @@ data Command
     | Nick Nick
     | Join Channel
     | Pong Server
+    | PrivMsg String String
 
 data Message
     = Ping Server
@@ -65,6 +66,7 @@ sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
 sendCommand (Join channel) = flip hPutStr ("JOIN " ++ channel ++ "\n")
 sendCommand (Pong server) = flip hPutStr ("PONG " ++ server ++ "\n")
+sendCommand (PrivMsg recipient text) = flip hPutStr ("PRIVMSG " ++ recipient ++ " :" ++ text)
 
 parseMessage :: Nick -> String -> Message
 parseMessage nick message = case pm message of
