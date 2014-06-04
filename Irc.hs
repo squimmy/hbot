@@ -1,16 +1,22 @@
 module Irc
 ( Command(User, Nick, Join, Pong)
-, handleMessage
+, Received(PrivateMessage, ChannelMessage, Other, ParseFailed)
+, connect
+, Config(Config)
 , Message(Msg)
 , sendCommand
 , parseMessage
 ) where
 
+import Control.Monad
+import Network
+import System.Environment
 import System.IO
 
 type Nick = String
 type Channel = String
 type Server = String
+type SendCommand = Command -> IO ()
 
 data Config = Config { server :: String
                      , nick :: String
@@ -24,25 +30,47 @@ data Command
     | Join Channel
     | Pong Server
 
+data Received
+    = Ping Server
+    | PrivateMessage Nick String
+    | ChannelMessage Channel Nick String
+    | Other String
+    | ParseFailed
+    deriving (Show)
 
 data Message = Msg (Maybe String) [String]
 
-
-handleMessage :: String -> Handle -> IO ()
-handleMessage message = case parseMessage message of
-    Just (Msg _ ["PING", server]) -> sendCommand $ Pong server
-    Just (Msg (Just prefix) content) -> (\ h -> putStrLn (prefix ++ show content))
-    _ -> (\ h -> putStrLn message)
+connect :: Config -> IO (SendCommand, [Received])
+connect config = do
+    handle <- connect (server config)
+    let send = flip sendCommand handle
+    line <- liftM lines $ hGetContents handle
+    send $ Nick (nick config)
+    send $ User (nick config) (realname config)
+    mapM_ (send . Join) (channels config)
+    hFlush handle
+    return (send, map (parseMessage (nick config)) line)
+    where
+        connect server = withSocketsDo $ do
+            connectTo server $ PortNumber 6667
 
 sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 * :" ++ realname ++ "\n")
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
 sendCommand (Join channel) = flip hPutStr ("JOIN " ++ channel ++ "\n")
 sendCommand (Pong server) = flip hPutStr ("PONG " ++ server ++ "\n")
 
-parseMessage :: String -> Maybe Message
-parseMessage (' ':xs) = parseMessage $ ltrim xs
-parseMessage (':':xs) = Just $ Msg (Just prefix) (pRec (ltrim content) []) where (prefix, content) = break (==' ') xs
-parseMessage xs = Just $ Msg Nothing (pRec xs [])
+parseMessage :: Nick -> String -> Received
+parseMessage nick message = case pm message of
+    Just (Msg _ ["PING", server]) -> Ping server
+    Just (Msg (Just prefix) ["PRIVMSG", recipient, text]) | recipient == nick -> PrivateMessage (extractNick prefix) text
+                                                          | otherwise -> ChannelMessage recipient (extractNick prefix) text
+    Just (Msg (Just prefix) content) -> Other (prefix ++ show content)
+    _ -> ParseFailed
+    where pm :: String -> Maybe Message
+          pm (' ':xs) = pm $ ltrim xs
+          pm (':':xs) = Just $ Msg (Just prefix) (pRec (ltrim content) []) where (prefix, content) = break (==' ') xs
+          pm xs = Just $ Msg Nothing (pRec xs [])
+          extractNick = takeWhile (/= '!')
 
 pRec :: String -> [String] -> [String]
 pRec [] acc       = reverse acc
