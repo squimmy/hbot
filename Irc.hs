@@ -9,6 +9,7 @@ module Irc
 ) where
 
 import Control.Monad
+import Data.List
 import Network
 import System.Environment
 import System.IO
@@ -49,10 +50,15 @@ connect config = do
     send $ User (nick config) (realname config)
     mapM_ (send . Join) (channels config)
     hFlush handle
-    return (send, map (parseMessage (nick config)) line)
+    let (pings, other) = partition isPing (map (parseMessage (nick config)) line)
+    mapM_ send (map reply pings)
+    return (send, other)
     where
         connect server = withSocketsDo $ do
             connectTo server $ PortNumber 6667
+        isPing (Ping _) = True
+        isPing _ = False
+        reply (Ping s) = Pong s
 
 sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 * :" ++ realname ++ "\n")
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
