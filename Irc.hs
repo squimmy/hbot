@@ -4,7 +4,6 @@ module Irc
 , connect
 , Config(Config)
 , RawMessage(Msg)
-, sendCommand
 , parseMessage
 ) where
 
