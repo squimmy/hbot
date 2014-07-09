@@ -66,7 +66,7 @@ sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
 sendCommand (Join channel) = flip hPutStr ("JOIN " ++ channel ++ "\n")
 sendCommand (Pong server) = flip hPutStr ("PONG " ++ server ++ "\n")
-sendCommand (PrivMsg recipient text) = flip hPutStr ("PRIVMSG " ++ recipient ++ " :" ++ text)
+sendCommand (PrivMsg recipient text) = flip hPutStr ("PRIVMSG " ++ recipient ++ " :" ++ text ++ "\n")
 
 parseMessage :: Nick -> String -> Message
 parseMessage nick message = case pm message of
