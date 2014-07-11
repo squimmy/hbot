@@ -10,7 +10,9 @@ parseDice = parse parseComplete "Parse error"
 
 parseComplete :: Parser Sum
 parseComplete = do
+    ignoreWhitespace
     s <- parseSum
+    ignoreWhitespace
     eof
     return s
 
@@ -32,14 +34,17 @@ parseExpr = do
     return $ Expr r
     <|> do
     char '('
+    ignoreWhitespace
     x <- many parseSum
+    ignoreWhitespace
     char ')'
     return $ Parens $ head x
 
 parseProd :: Parser Product
 parseProd = do
     x <- parseExpr
-    xs <- many (char '*' >> parseExpr)
+    ignoreWhitespace
+    xs <- many (char '*' >> ignoreWhitespace >> parseExpr)
     return $ Product x xs
 
 parseSumType :: Parser SumType
@@ -53,9 +58,14 @@ parseSumType = do
 parseSum :: Parser Sum
 parseSum = do
     x <- parseProd
+    ignoreWhitespace
     xs <- many (do
         s <- parseSumType
+        ignoreWhitespace
         p <- parseProd
         return (s, p))
     return (Sum x xs)
 
+
+ignoreWhitespace :: Parser String
+ignoreWhitespace = many (char ' ')
