@@ -2,6 +2,7 @@ import Control.Monad
 import Data.Maybe
 import System.Environment
 import Irc
+import Dice
 
 main = do
     args <- getArgs
@@ -10,7 +11,11 @@ main = do
     (sendMessage, input) <- connect(config)
     mapM_ ((=<<) sendMessage) $ catMaybes (map roll input)
 
-echo :: Message -> Maybe (IO Command)
-echo (PrivateMessage nick text) = Just $ return (PrivMsg nick text)
-echo (ChannelMessage channel nick text) = Just $ return (PrivMsg channel (nick ++ ": " ++ text))
-echo _ = Nothing
+roll :: Message -> Maybe (IO Command)
+roll (PrivateMessage nick text) = do
+    r <- evaluate text
+    return (fmap (PrivMsg nick . show) r)
+roll (ChannelMessage channel nick text) = do
+    r <- evaluate text
+    return (fmap (PrivMsg channel . (++) (nick ++ ": ") . show) r)
+roll _ = Nothing
