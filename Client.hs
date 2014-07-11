@@ -1,5 +1,3 @@
-import Network
-import System.IO
 import Control.Monad
 import Data.Maybe
 import System.Environment
