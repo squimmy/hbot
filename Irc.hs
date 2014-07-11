@@ -72,8 +72,8 @@ sendCommand (PrivMsg recipient text) = flip hPutStr ("PRIVMSG " ++ recipient ++ 
 parseMessage :: Nick -> String -> Message
 parseMessage nick message = case pm message of
     Just (Msg _ ["PING", server]) -> Ping server
-    Just (Msg (Just prefix) ["PRIVMSG", recipient, text]) | recipient == nick -> PrivateMessage (extractNick prefix) text
-                                                          | otherwise -> ChannelMessage recipient (extractNick prefix) text
+    Just (Msg (Just prefix) ["PRIVMSG", recipient, text]) | recipient == nick -> PrivateMessage (extractNick prefix) (rstrip text)
+                                                          | otherwise -> ChannelMessage recipient (extractNick prefix) (rstrip text)
     Just (Msg (Just prefix) content) -> Other (prefix ++ show content)
     _ -> ParseFailed
     where
