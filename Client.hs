@@ -10,12 +10,7 @@ main = do
     let nick : name : server : channels = args
     let config = Config server nick name channels
     (sendMessage, input) <- connect(config)
-    mapM_ (reply sendMessage) $ catMaybes (map echo input)
-
-reply :: (Command -> IO ()) -> IO Command -> IO ()
-reply send command = do
-    c <- command
-    send c
+    mapM_ ((=<<) sendMessage) $ catMaybes (map roll input)
 
 echo :: Message -> Maybe (IO Command)
 echo (PrivateMessage nick text) = Just $ return (PrivMsg nick text)
