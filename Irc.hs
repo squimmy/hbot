@@ -10,6 +10,7 @@ module Irc
 import Control.Concurrent
 import Control.Monad
 import Data.List
+import Data.String.Utils
 import Network
 import System.Environment
 import System.IO
@@ -77,8 +78,8 @@ parseMessage nick message = case pm message of
     _ -> ParseFailed
     where
         pm :: String -> Maybe RawMessage
-        pm (' ':xs) = pm $ ltrim xs
-        pm (':':xs) = Just $ Msg (Just prefix) (pRec (ltrim content) []) where (prefix, content) = break (==' ') xs
+        pm (' ':xs) = pm $ lstrip xs
+        pm (':':xs) = Just $ Msg (Just prefix) (pRec (lstrip content) []) where (prefix, content) = break (==' ') xs
         pm xs = Just $ Msg Nothing (pRec xs [])
 
         extractNick = takeWhile (/= '!')
@@ -86,6 +87,5 @@ parseMessage nick message = case pm message of
         pRec :: String -> [String] -> [String]
         pRec [] acc       = reverse acc
         pRec (':':xs) acc = reverse $ xs:acc
-        pRec xs acc       = pRec (ltrim rem) (param:acc) where (param, rem) = break (==' ') xs
+        pRec xs acc       = pRec (lstrip rem) (param:acc) where (param, rem) = break (==' ') xs
 
-ltrim = dropWhile (==' ')
