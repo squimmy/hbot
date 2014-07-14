@@ -1,8 +1,10 @@
 import Control.Monad
 import Data.Maybe
-import System.Environment
-import Irc
+import Data.String.Utils as String
 import Dice
+import Irc
+import Irc.Formatting
+import System.Environment
 
 main = do
     args <- getArgs
@@ -21,5 +23,7 @@ roll (ChannelMessage channel nick text) = do
 roll _ = Nothing
 
 formatResult :: ([Die], Int) -> String
-formatResult (dice, total) = show (map value dice) ++ ": " ++ (show total)
-    where value (Die _ v) = v
+formatResult (dice, total) = "[" ++ (String.join ", " (map value dice)) ++ "]: " ++ (show total)
+    where value (Die d v) | v == d    = format Bold (show v)
+                          | otherwise = show v
+
