@@ -1,5 +1,6 @@
-module Dice (
-  evaluate
+module Dice
+( evaluate
+, Die(Die)
 ) where
 
 

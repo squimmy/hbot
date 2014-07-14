@@ -17,5 +17,9 @@ roll (PrivateMessage nick text) = do
     return (fmap (PrivMsg nick . show) r)
 roll (ChannelMessage channel nick text) = do
     r <- evaluate text
-    return (fmap (PrivMsg channel . (++) (nick ++ ": ") . show) r)
+    return (fmap (PrivMsg channel . (++) (nick ++ ": ") . formatResult) r)
 roll _ = Nothing
+
+formatResult :: ([Die], Int) -> String
+formatResult (dice, total) = show (map value dice) ++ ": " ++ (show total)
+    where value (Die _ v) = v
