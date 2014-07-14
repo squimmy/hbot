@@ -6,33 +6,34 @@ import Data.List
 import Dice.AST
 import System.Random
 
-type RollDice = Int -> Int -> [Int]
+type RollDice = RandomGen a => a -> Int -> Int -> [Int]
 
+evalTree :: RandomGen a => RollDice -> a -> Sum -> ([Int], Int)
 evalTree = evalSum
 
-evalRoll :: RollDice -> Roll -> ([Int], Int)
-evalRoll r (Roll x y) = case y of
-    Just d -> (z, sum z) where z = (r x d)
+evalRoll :: RandomGen a => RollDice -> a -> Roll -> ([Int], Int)
+evalRoll r g (Roll x y) = case y of
+    Just d -> (z, sum z) where z = r g x d
     Nothing -> ([], x)
 
-evalExpr :: RollDice -> Expr -> ([Int], Int)
-evalExpr r e = case e of
-    Expr x -> evalRoll r x
-    Parens x -> evalSum r x
+evalExpr :: RandomGen a => RollDice -> a -> Expr -> ([Int], Int)
+evalExpr r g e = case e of
+    Expr x -> evalRoll r g x
+    Parens x -> evalSum r g x
 
-evalProd :: RollDice -> Product -> ([Int], Int)
-evalProd r (Product x xs) = (foldr1 (&*) (map (evalExpr r) (x:xs)))
+evalProd :: RandomGen a => RollDice -> a -> Product -> ([Int], Int)
+evalProd r g (Product x xs) = (foldr1 (&*) (map (uncurry (evalExpr r)) (zip (splitMany g) (x:xs))))
     where (ys, y) &* (zs, z) = (ys++zs, y*z)
 
-evalSum :: RollDice -> Sum -> ([Int], Int)
-evalSum r (Sum x xs) = do
-    foldl1 (&-) ((foldr1 (&+) ((evalProd r x):p)):m)
-    where (p, m) = tmap (map snd) (partition (isPlus . fst) (map (mapSnd (evalProd r)) xs))
-          isPlus x = case x of
-              Plus -> True
-              _ -> False
-          mapSnd f (a, b) = (a, f b)
-          tmap f (a, b) = (f a, f b)
-          (ys, y) &+ (zs, z) = (ys++zs, y+z)
-          (ys, y) &- (zs, z) = (ys++zs, y-z)
+evalSum :: RandomGen a => RollDice -> a -> Sum -> ([Int], Int)
+evalSum r g (Sum x xs) = foldl apply (evalProd r g1 x) (zipWith (evalOp r) (splitMany g2) xs)
+    where apply (ys, y) (op, (zs, z)) = case op of
+              Plus -> (ys++zs, y+z)
+              Minus -> (ys++zs, y-z)
+          (g1, g2) = split g
 
+evalOp :: RandomGen a => RollDice -> a -> (SumType, Product) -> (SumType, ([Int], Int))
+evalOp r g (op, prod) = (op, evalProd r g prod)
+
+splitMany :: RandomGen a => a -> [a]
+splitMany g = case split g of (g1, g2) -> g1:(splitMany g2)
