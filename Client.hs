@@ -23,7 +23,8 @@ roll (ChannelMessage channel nick text) = do
 roll _ = Nothing
 
 formatResult :: ([Die], Int) -> String
-formatResult (dice, total) = "[" ++ (String.join ", " (map value dice)) ++ "]: " ++ (show total)
-    where value (Die d v) | v == d    = format Bold (show v)
-                          | otherwise = show v
+formatResult (dice, total) = "[" ++ (String.join " " (map value dice)) ++ "]: " ++ (show total)
+    where value (Die d v) | v == d    = format (Green, Silver) (" "++(show v)++" ")
+                          | v == 1    = format (Red, Silver) (" "++(show v)++" ")
+                          | otherwise = format (Black, Silver) (" "++(show v)++" ")
 
