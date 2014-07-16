@@ -66,11 +66,15 @@ connect config = do
 
 sendCommand :: Command -> Handle -> IO ()
 sendCommand x = case x of
-    (User un rn) -> flip hPutStr ("USER " ++ un ++ " 8 * :" ++ rn ++ "\n")
-    (Nick n) -> flip hPutStr ("NICK " ++ n ++ "\n")
-    (Join c) -> flip hPutStr ("JOIN " ++ c ++ "\n")
-    (Pong s) -> flip hPutStr ("PONG " ++ s ++ "\n")
-    (PrivMsg r t) -> flip hPutStr ("PRIVMSG " ++ r ++ " :" ++ t ++ "\n")
+    (User un rn) -> sendMessage ("USER " ++ un ++ " 8 * :" ++ rn)
+    (Nick n) -> sendMessage ("NICK " ++ n)
+    (Join c) -> sendMessage ("JOIN " ++ c)
+    (Pong s) -> sendMessage ("PONG " ++ s)
+    (PrivMsg r t) -> sendMessage ("PRIVMSG " ++ r ++ " :" ++ t)
+
+sendMessage :: String -> Handle -> IO ()
+sendMessage = flip hPutStr . (flip  (++) "\r\n") . (take 510)
+
 
 parseMessage :: Nick -> String -> Message
 parseMessage nick message = case pm message of
