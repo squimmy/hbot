@@ -3,8 +3,6 @@ module Dice
 , Die(Die)
 ) where
 
-
-import Dice.AST
 import Dice.Parser
 import Dice.Evaluator
 import System.Random

@@ -10,9 +10,9 @@ module Irc
 import Control.Concurrent
 import Control.Monad
 import Data.List
+import Data.Maybe
 import Data.String.Utils
 import Network
-import System.Environment
 import System.IO
 
 type Nick = String
@@ -46,7 +46,7 @@ data RawMessage = Msg (Maybe String) [String]
 
 connect :: Config -> IO (SendCommand, [Message])
 connect config = do
-    handle <- connect (server config)
+    handle <- conn (server config)
     let send = flip sendCommand handle
     line <- liftM lines $ hGetContents handle
     send $ Nick (nick config)
@@ -54,15 +54,17 @@ connect config = do
     mapM_ (send . Join) (channels config)
     hFlush handle
     let (pings, other) = partition isPing (map (parseMessage (nick config)) line)
-    forkIO (mapM_ send (map reply pings))
+    _ <- forkIO (mapM_ send (catMaybes $ map reply pings))
     return (send, other)
     where
-        connect server = withSocketsDo $ do
-            connectTo server $ PortNumber 6667
+        conn serverAddress = withSocketsDo $ do
+            connectTo serverAddress $ PortNumber 6667
         isPing (Ping _) = True
         isPing _ = False
-        reply (Ping s) = Pong s
+        reply (Ping s) = Just $ Pong s
+        reply _ = Nothing
 
+sendCommand :: Command -> Handle -> IO ()
 sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 * :" ++ realname ++ "\n")
 sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
 sendCommand (Join channel) = flip hPutStr ("JOIN " ++ channel ++ "\n")
@@ -87,5 +89,5 @@ parseMessage nick message = case pm message of
         pRec :: String -> [String] -> [String]
         pRec [] acc       = reverse acc
         pRec (':':xs) acc = reverse $ xs:acc
-        pRec xs acc       = pRec (lstrip rem) (param:acc) where (param, rem) = break (==' ') xs
+        pRec xs acc       = pRec (lstrip r) (param:acc) where (param, r) = break (==' ') xs
 

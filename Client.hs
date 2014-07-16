@@ -6,6 +6,7 @@ import Irc
 import Irc.Formatting
 import System.Environment
 
+main :: IO ()
 main = do
     args <- getArgs
     let nick : name : server : channels = args
