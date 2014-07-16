@@ -65,11 +65,12 @@ connect config = do
         reply _ = Nothing
 
 sendCommand :: Command -> Handle -> IO ()
-sendCommand (User username realname) = flip hPutStr ("USER " ++ username ++ " 8 * :" ++ realname ++ "\n")
-sendCommand (Nick nick) = flip hPutStr ("NICK " ++ nick ++ "\n")
-sendCommand (Join channel) = flip hPutStr ("JOIN " ++ channel ++ "\n")
-sendCommand (Pong server) = flip hPutStr ("PONG " ++ server ++ "\n")
-sendCommand (PrivMsg recipient text) = flip hPutStr ("PRIVMSG " ++ recipient ++ " :" ++ text ++ "\n")
+sendCommand x = case x of
+    (User un rn) -> flip hPutStr ("USER " ++ un ++ " 8 * :" ++ rn ++ "\n")
+    (Nick n) -> flip hPutStr ("NICK " ++ n ++ "\n")
+    (Join c) -> flip hPutStr ("JOIN " ++ c ++ "\n")
+    (Pong s) -> flip hPutStr ("PONG " ++ s ++ "\n")
+    (PrivMsg r t) -> flip hPutStr ("PRIVMSG " ++ r ++ " :" ++ t ++ "\n")
 
 parseMessage :: Nick -> String -> Message
 parseMessage nick message = case pm message of
