@@ -2,8 +2,9 @@ module Dice.Parser(
   parseDice
 ) where
 
-import Text.ParserCombinators.Parsec
+import Data.Maybe
 import Dice.AST
+import Text.ParserCombinators.Parsec
 
 parseDice :: String -> Either ParseError Sum
 parseDice = parse parseComplete "Parse error"
@@ -19,14 +20,19 @@ parseComplete = do
 natural :: Parser Char
 natural = oneOf "0123456789"
 
-parseNatural :: Parser String
-parseNatural = many1 natural
+parseNumber :: Parser Int
+parseNumber = do
+    a <- natural
+    b <- optionMaybe natural
+    c <- optionMaybe natural
+    d <- optionMaybe natural
+    return $ read (a:(catMaybes (b:c:d:[])))
 
 parseRoll :: Parser Roll
 parseRoll = do
-    x <- parseNatural
-    y <- optionMaybe (char 'd' >> parseNatural)
-    return $ Roll (read x) (fmap read y)
+    x <- parseNumber
+    y <- optionMaybe (char 'd' >> parseNumber)
+    return $ Roll x y
 
 parseExpr :: Parser Expr
 parseExpr = do
